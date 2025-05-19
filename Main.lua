@@ -1,5 +1,5 @@
 -- Made by:
--- Owner:Kai (maxlol2023k)
+-- Owner: Kai (maxlol2023k)
 -- Uploader: eldonnadie820
 
 game:DefineFastFlag("UseEnhancedNotificationClicks", true)
@@ -18,6 +18,7 @@ Notification.Styles = {
 -- Services
 local TweenService = game:GetService("TweenService")
 local Players      = game:GetService("Players")
+local RunService   = game:GetService("RunService")
 
 -- Create or return holder
 local function getHolder()
@@ -35,7 +36,7 @@ local function getHolder()
         container.Name        = "Container"
         container.AnchorPoint = Vector2.new(0.5,0)
         container.Position    = UDim2.new(0.5,0,0,50)
-        container.Size        = UDim2.new(0,320,0,0)
+        container.Size        = UDim2.new(1,0,0,0)     -- Full width for mobile
         container.BackgroundTransparency = 1
 
         local layout = Instance.new("UIListLayout", container)
@@ -48,12 +49,12 @@ end
 -- Core send method
 function Notification:Send(title, text, duration, style)
     duration = duration or self.DurationDefault
-    local cfg = self.Styles[style] or self.Styles.Info
+    local cfg    = self.Styles[style] or self.Styles.Info
     local holder = getHolder()
 
     -- Main frame
     local frame = Instance.new("Frame", holder)
-    frame.Size        = UDim2.new(0,320,0,80)
+    frame.Size        = UDim2.new(0.9,0,0,80)             -- 90% width across all screens
     frame.Position    = UDim2.new(0.5,0,0,-100)
     frame.AnchorPoint = Vector2.new(0.5,0)
     frame.BackgroundColor3    = cfg.BG
@@ -61,7 +62,7 @@ function Notification:Send(title, text, duration, style)
     frame.ZIndex = 10
 
     -- Rounded corners & shadow
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,4) -- Menos redondeado
     local shadow = Instance.new("ImageLabel", frame)
     shadow.Name               = "Shadow"
     shadow.Size               = UDim2.new(1,20,1,20)
@@ -71,6 +72,7 @@ function Notification:Send(title, text, duration, style)
     shadow.ScaleType          = Enum.ScaleType.Slice
     shadow.SliceCenter        = Rect.new(30,30,60,60)
     shadow.ImageTransparency  = 0.4
+    shadow.ImageColor3        = Color3.new(0,0,0)   -- Sombra negra
 
     -- Icon
     local icon = Instance.new("ImageLabel", frame)
