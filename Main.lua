@@ -1,6 +1,5 @@
 -- Made by:
 -- Owner: Kai (maxlol2023k)
--- Uploader: eldonnadie820
 
 game:DefineFastFlag("UseEnhancedNotificationClicks", true)
 Notification = {}
