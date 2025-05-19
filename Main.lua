@@ -61,7 +61,7 @@ function Notification:Send(title, text, duration, style)
     frame.ZIndex = 10
 
     -- Rounded corners & shadow
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,20)
     local shadow = Instance.new("ImageLabel", frame)
     shadow.Name               = "Shadow"
     shadow.Size               = UDim2.new(1,20,1,20)
