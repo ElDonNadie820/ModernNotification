@@ -61,7 +61,7 @@ function Notification:Send(title, text, duration, style)
     frame.ZIndex = 10
 
     -- Rounded corners & shadow
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,20)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
     local shadow = Instance.new("ImageLabel", frame)
     shadow.Name               = "Shadow"
     shadow.Size               = UDim2.new(1,20,1,20)
@@ -70,7 +70,7 @@ function Notification:Send(title, text, duration, style)
     shadow.Image              = "rbxassetid://6014261993"
     shadow.ScaleType          = Enum.ScaleType.Slice
     shadow.SliceCenter        = Rect.new(30,30,60,60)
-    shadow.ImageTransparency  = 0.7
+    shadow.ImageTransparency  = 0.4
 
     -- Icon
     local icon = Instance.new("ImageLabel", frame)
