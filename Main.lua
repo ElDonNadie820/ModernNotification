@@ -1,5 +1,6 @@
 --[[
   Made By: Kai
+  Made With Love <3
   V1.1.0
 ]]
 
@@ -15,10 +16,10 @@ Notification.WidthScale      = 0.9             -- width relative to screen
 
 -- Styles (with updated icon IDs)
 Notification.Styles = {
-    Info    = {BG = Color3.fromRGB(52,152,219), Text = Color3.new(1,1,1), Icon = "rbxassetid://118993831308719"},
-    Success = {BG = Color3.fromRGB(46,204,113), Text = Color3.new(1,1,1), Icon = "rbxassetid://81332070886102"},
-    Warning = {BG = Color3.fromRGB(241,196,15), Text = Color3.new(0,0,0), Icon = "rbxassetid://115685622023950"},
-    Error   = {BG = Color3.fromRGB(231,76,60), Text = Color3.new(1,1,1), Icon = "rbxassetid://134966740691290"},
+    Info    = {BG = Color3.fromRGB(52,152,219), Text = Color3.new(1,1,1), Icon = "rbxassetid://87995783720912"},
+    Success = {BG = Color3.fromRGB(46,204,113), Text = Color3.new(1,1,1), Icon = "rbxassetid://132290828086464"},
+    Warning = {BG = Color3.fromRGB(241,196,15), Text = Color3.new(0,0,0), Icon = "rbxassetid://126337702969156"},
+    Error   = {BG = Color3.fromRGB(231,76,60), Text = Color3.new(1,1,1), Icon = "rbxassetid://86279777621841"},
 }
 
 -- Services
