@@ -1,21 +1,21 @@
 --[[
   Made By: Kai (maxlol2023)
-  Created With Love <3
-  V1.0
+  Made With Love <3
+  V1.0.0
 ]]
 
--- Global Notification table
 game:DefineFastFlag("UseEnhancedNotificationClicks", true)
 Notification = {}
-Notification.BarHeight       = 6       -- Height of the duration bar
-Notification.DurationDefault = 5       -- Default duration in seconds
-Notification.SlideTime       = 0.4     -- Slide in/out time
-Notification.FadeTime        = 0.2     -- Fade out time
+Notification.BarHeight       = 6                       -- Height of the duration bar (px)
+Notification.DurationDefault = 5                       -- Default duration in seconds
+Notification.SlideTime       = 0.4                     -- Slide in/out time
+Notification.FadeTime        = 0.2                     -- Fade out time
+Notification.WidthScale      = 0.8                     -- Notification width relative to screen width
 Notification.Styles = {
-    Info    = {BG = Color3.fromRGB(52,152,219), Text = Color3.new(1,1,1), Icon = "rbxassetid://6023422300"},
-    Success = {BG = Color3.fromRGB(46,204,113), Text = Color3.new(1,1,1), Icon = "rbxassetid://6023426910"},
-    Warning = {BG = Color3.fromRGB(241,196,15), Text = Color3.new(0,0,0), Icon = "rbxassetid://6023430219"},
-    Error   = {BG = Color3.fromRGB(231,76,60), Text = Color3.new(1,1,1), Icon = "rbxassetid://6023436351"},
+    Info    = {BG = Color3.fromRGB(52,152,219), Text = Color3.new(1,1,1), Icon = "rbxassetid://118993831308719"},
+    Success = {BG = Color3.fromRGB(46,204,113), Text = Color3.new(1,1,1), Icon = "rbxassetid://81332070886102"},
+    Warning = {BG = Color3.fromRGB(241,196,15), Text = Color3.new(0,0,0), Icon = "rbxassetid://115685622023950"},
+    Error   = {BG = Color3.fromRGB(231,76,60), Text = Color3.new(1,1,1), Icon = "rbxassetid://134966740691290"},
 }
 
 -- Services
@@ -29,16 +29,16 @@ local function getHolder()
     local sg     = gui:FindFirstChild("NotificationHolder")
     if not sg then
         sg = Instance.new("ScreenGui")
-        sg.Name = "NotificationHolder"
-        sg.ResetOnSpawn = false
-        sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        sg.Parent = gui
+        sg.Name            = "NotificationHolder"
+        sg.ResetOnSpawn    = false
+        sg.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
+        sg.Parent          = gui
 
         local container = Instance.new("Frame", sg)
         container.Name        = "Container"
         container.AnchorPoint = Vector2.new(0.5,0)
-        container.Position    = UDim2.new(0.5,0,0,50)
-        container.Size        = UDim2.new(0,320,0,0)
+        container.Position    = UDim2.new(0.5,0,0.05,0)       -- 5% down from top
+        container.Size        = UDim2.new(1,0,0,0)            -- full width, height auto
         container.BackgroundTransparency = 1
 
         local layout = Instance.new("UIListLayout", container)
@@ -56,14 +56,14 @@ function Notification:Send(title, text, duration, style)
 
     -- Main frame
     local frame = Instance.new("Frame", holder)
-    frame.Size        = UDim2.new(0,320,0,80)
-    frame.Position    = UDim2.new(0.5,0,0,-100)
-    frame.AnchorPoint = Vector2.new(0.5,0)
-    frame.BackgroundColor3    = cfg.BG
-    frame.BackgroundTransparency = 1
-    frame.ZIndex = 10
+    frame.AnchorPoint           = Vector2.new(0.5,0)
+    frame.Position              = UDim2.new(0.5,0,0, -100)
+    frame.Size                  = UDim2.new(self.WidthScale,0,0, 80)
+    frame.BackgroundColor3      = cfg.BG
+    frame.BackgroundTransparency= 1
+    frame.ZIndex                = 10
 
-    -- Slightly rounded corners & black shadow
+    -- Rounded corners & black shadow
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0,4)
     local shadow = Instance.new("ImageLabel", frame)
     shadow.Name               = "Shadow"
@@ -78,11 +78,11 @@ function Notification:Send(title, text, duration, style)
 
     -- Icon
     local icon = Instance.new("ImageLabel", frame)
-    icon.Size               = UDim2.new(0,24,0,24)
-    icon.Position           = UDim2.new(0,12,0,12)
+    icon.Size                   = UDim2.new(0,24,0,24)
+    icon.Position               = UDim2.new(0,12,0,12)
     icon.BackgroundTransparency = 1
-    icon.Image              = cfg.Icon
-    icon.ImageColor3        = cfg.Text
+    icon.Image                  = cfg.Icon
+    icon.ImageColor3            = cfg.Text
 
     -- Title label
     local titleLbl = Instance.new("TextLabel", frame)
@@ -120,13 +120,13 @@ function Notification:Send(title, text, duration, style)
     local barFill = Instance.new("Frame", barBg)
     barFill.Size             = UDim2.new(1,0,1,0)
     barFill.BackgroundColor3 = cfg.Text
-    local fillCorner = Instance.new("UICorner", barFill)
-    fillCorner.CornerRadius = UDim.new(0,2)
+    local fillCorner             = Instance.new("UICorner", barFill)
+    fillCorner.CornerRadius      = UDim.new(0,2)
 
     -- Animate in
     TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0,
-        Position = UDim2.new(0.5,0,0,0)
+        Position               = UDim2.new(0.5,0,0,0)
     }):Play()
 
     -- Bar tween
@@ -154,11 +154,11 @@ function Notification:Send(title, text, duration, style)
 
     -- Invisible click overlay
     local clickBtn = Instance.new("TextButton", frame)
-    clickBtn.Size                 = UDim2.new(1,0,1,0)
-    clickBtn.Position             = UDim2.new(0,0,0,0)
+    clickBtn.Size                   = UDim2.new(1,0,1,0)
+    clickBtn.Position               = UDim2.new(0,0,0,0)
     clickBtn.BackgroundTransparency = 1
-    clickBtn.Text                 = ""
-    clickBtn.ZIndex               = frame.ZIndex + 1
+    clickBtn.Text                   = ""
+    clickBtn.ZIndex                 = frame.ZIndex + 1
     clickBtn.MouseButton1Click:Connect(dismiss)
 
     -- Auto dismiss
