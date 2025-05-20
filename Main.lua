@@ -1,7 +1,7 @@
 --[[
   Made By: Kai
   Made With Love <3
-  V1.1.0
+  V1.1.1
 ]]
 
 game:DefineFastFlag("UseEnhancedNotificationClicks", true)
@@ -48,7 +48,7 @@ local function getHolder()
         container.ClipsDescendants = false
 
         local layout = Instance.new("UIListLayout", container)
-        layout.Padding   = UDim.new(0, 8)
+        layout.Padding   = UDim.new(1, 8)
         layout.SortOrder = Enum.SortOrder.LayoutOrder
     end
     return sg.Container
@@ -63,7 +63,7 @@ function Notification:Send(title, text, duration, style)
     -- Notification frame
     local frame = Instance.new("Frame")
     frame.Name                   = "Notification"
-    frame.Size                   = UDim2.new(1, 0, 0, 80)
+    frame.Size                   = UDim2.new(1, 0, 0, 40)
     frame.AnchorPoint            = Vector2.new(0.5, 0)
     frame.Position               = UDim2.new(0.5, 0, 0, -100)
     frame.BackgroundColor3       = cfg.BG
