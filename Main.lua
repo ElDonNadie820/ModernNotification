@@ -1,7 +1,7 @@
 --[[
   Made By: Kai
   Made With Love <3
-  V1.1.2
+  V1.1.3
 ]]
 
 game:DefineFastFlag("UseEnhancedNotificationClicks", true)
@@ -12,7 +12,7 @@ Notification.BarHeight       = 6               -- px height of duration bar
 Notification.DurationDefault = 5               -- default duration (s)
 Notification.SlideTime       = 0.4             -- slide in/out time (s)
 Notification.FadeTime        = 0.2             -- fade out time (s)
-Notification.WidthScale      = 0.9             -- width relative to screen
+Notification.WidthScale      = 0.5             -- width relative to screen
 
 -- Styles (with updated icon IDs)
 Notification.Styles = {
@@ -48,7 +48,7 @@ local function getHolder()
         container.ClipsDescendants = false
 
         local layout = Instance.new("UIListLayout", container)
-        layout.Padding   = UDim.new(0.05, 8)
+        layout.Padding   = UDim.new(0.01, 8)
         layout.SortOrder = Enum.SortOrder.LayoutOrder
     end
     return sg.Container
