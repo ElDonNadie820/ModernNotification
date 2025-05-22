@@ -1,20 +1,19 @@
 --[[
   Made By: Kai
   Made With Love <3
-  V1.1.5
+  V1.0 (beta)
 ]]
 
-game:DefineFastFlag("UseEnhancedNotificationClicks", true)
-Notification = {}
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local Notification = {}
 
--- Settings
-Notification.BarHeight       = 6               -- px height of duration bar
-Notification.DurationDefault = 5               -- default duration (s)
-Notification.SlideTime       = 0.4             -- slide in/out time (s)
-Notification.FadeTime        = 0.2             -- fade out time (s)
-Notification.WidthScale      = 0.5             -- width relative to screen
+Notification.BarHeight = 6
+Notification.DurationDefault = 5
+Notification.SlideTime = 0.4
+Notification.FadeTime = 0.2
+Notification.WidthScale = 0.5
 
--- Styles (with updated icon IDs)
 Notification.Styles = {
     Info    = {BG = Color3.fromRGB(52,152,219), Text = Color3.new(1,1,1), Icon = "rbxassetid://87995783720912"},
     Success = {BG = Color3.fromRGB(46,204,113), Text = Color3.new(1,1,1), Icon = "rbxassetid://132290828086464"},
@@ -22,173 +21,176 @@ Notification.Styles = {
     Error   = {BG = Color3.fromRGB(231,76,60), Text = Color3.new(1,1,1), Icon = "rbxassetid://86279777621841"},
 }
 
--- Services
-local TweenService = game:GetService("TweenService")
-local Players      = game:GetService("Players")
-
--- Create or return holder
 local function getHolder()
-    local player = Players.LocalPlayer
-    local gui    = player:WaitForChild("PlayerGui")
-    local sg     = gui:FindFirstChild("NotificationHolder")
-    if not sg then
-        sg = Instance.new("ScreenGui")
-        sg.Name            = "NotificationHolder"
-        sg.ResetOnSpawn    = false
-        sg.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
-        sg.Parent          = gui
+    local gui = Players.LocalPlayer:WaitForChild("PlayerGui")
+    local holder = gui:FindFirstChild("NotificationHolder")
+    if not holder then
+        holder = Instance.new("ScreenGui")
+        holder.Name = "NotificationHolder"
+        holder.ResetOnSpawn = false
+        holder.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        holder.Parent = gui
 
-        local container = Instance.new("Frame", sg)
-        container.Name            = "Container"
-        container.AnchorPoint     = Vector2.new(0.5, 0)
-        container.Position        = UDim2.new(0.5, 0, 0.05, 0) -- 5% from top
-        container.Size            = UDim2.new(Notification.WidthScale, 0, 0, 0)
+        local container = Instance.new("Frame")
+        container.Name = "Container"
+        container.AnchorPoint = Vector2.new(0.5, 0)
+        container.Position = UDim2.new(0.5, 0, 0.05, 0)
+        container.Size = UDim2.new(Notification.WidthScale, 0, 0, 0)
         container.BackgroundTransparency = 1
-        container.AutomaticSize   = Enum.AutomaticSize.Y
+        container.AutomaticSize = Enum.AutomaticSize.Y
         container.ClipsDescendants = false
+        container.Parent = holder
 
-        local layout = Instance.new("UIListLayout", container)
-        layout.Padding   = UDim.new(0.01, 8)
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 8)
         layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = container
     end
-    return sg.Container
+    return holder.Container
 end
 
--- Core send method
 function Notification:Send(title, text, duration, style)
     duration = duration or self.DurationDefault
     local cfg = self.Styles[style] or self.Styles.Info
     local holder = getHolder()
 
-    -- Notification frame
     local frame = Instance.new("Frame")
-    frame.Name                   = "Notification"
-    frame.Size                   = UDim2.new(1, 0, 0, 80)
-    frame.AnchorPoint            = Vector2.new(0.5, 0)
-    frame.Position               = UDim2.new(0.5, 0, 0, -100)
-    frame.BackgroundColor3       = cfg.BG
+    frame.Name = "Notification"
+    frame.Size = UDim2.new(1, 0, 0, 80)
+    frame.BackgroundColor3 = cfg.BG
     frame.BackgroundTransparency = 1
-    frame.ZIndex                 = 10
-    frame.Parent                 = holder
+    frame.ClipsDescendants = true
+    frame.ZIndex = 10
+    frame.AnchorPoint = Vector2.new(0.5, 0)
+    frame.Position = UDim2.new(0.5, 0, 0, -100)
+    frame.Parent = holder
 
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 4)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
 
-    -- Shadow
-    local shadow = Instance.new("ImageLabel", frame)
-    shadow.Name               = "Shadow"
-    shadow.Size               = UDim2.new(1, 20, 1, 20)
-    shadow.Position           = UDim2.new(0, -10, 0, -10)
-    shadow.BackgroundTransparency = 1
-    shadow.Image              = "rbxassetid://6014261993"
-    shadow.ImageColor3        = Color3.new(0, 0, 0)
-    shadow.ScaleType          = Enum.ScaleType.Slice
-    shadow.SliceCenter        = Rect.new(30, 30, 60, 60)
-    shadow.ImageTransparency  = 0.6
+    local icon = Instance.new("ImageLabel")
+    icon.Name = "Icon"
+    icon.Image = cfg.Icon
+    icon.Size = UDim2.new(0, 28, 0, 28)
+    icon.Position = UDim2.new(0, 12, 0, 12)
+    icon.BackgroundTransparency = 1
+    icon.ImageTransparency = 1
+    icon.ZIndex = 11
+    icon.Parent = frame
 
-    -- Icon
-    local icon = Instance.new("ImageLabel", frame)
-    icon.Name                  = "Icon"
-    icon.Size                  = UDim2.new(0, 24, 0, 24)
-    icon.Position              = UDim2.new(0, 12, 0, 12)
-    icon.BackgroundTransparency= 1
-    icon.Image                 = cfg.Icon
-    icon.ImageTransparency     = 1
-    icon.ZIndex                = frame.ZIndex + 1
-
-    TweenService:Create(icon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        ImageTransparency = 0
-    }):Play()
-
-    -- Title
-    local titleLbl = Instance.new("TextLabel", frame)
-    titleLbl.Name               = "Title"
-    titleLbl.Size               = UDim2.new(1, -52, 0, 24)
-    titleLbl.Position           = UDim2.new(0, 44, 0, 12)
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.Name = "Title"
+    titleLbl.Text = title or "Title"
+    titleLbl.Font = Enum.Font.GothamBold
+    titleLbl.TextSize = 20
+    titleLbl.TextColor3 = cfg.Text
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
     titleLbl.BackgroundTransparency = 1
-    titleLbl.Font               = Enum.Font.GothamBold
-    titleLbl.TextSize           = 20
-    titleLbl.TextColor3         = cfg.Text
-    titleLbl.Text               = title or "Title"
-    titleLbl.TextXAlignment     = Enum.TextXAlignment.Left
-    titleLbl.ZIndex             = frame.ZIndex + 1
+    titleLbl.Size = UDim2.new(1, -52, 0, 24)
+    titleLbl.Position = UDim2.new(0, 44, 0, 12)
+    titleLbl.ZIndex = 11
+    titleLbl.TextTransparency = 1
+    titleLbl.Parent = frame
 
-    -- Body
-    local textLbl = Instance.new("TextLabel", frame)
-    textLbl.Name               = "Body"
-    textLbl.Size               = UDim2.new(1, -24, 0, 36)
-    textLbl.Position           = UDim2.new(0, 12, 0, 36)
+    local textLbl = Instance.new("TextLabel")
+    textLbl.Name = "Body"
+    textLbl.Text = text or "Message body."
+    textLbl.Font = Enum.Font.Gotham
+    textLbl.TextSize = 14
+    textLbl.TextWrapped = true
+    textLbl.TextColor3 = cfg.Text
+    textLbl.TextXAlignment = Enum.TextXAlignment.Left
     textLbl.BackgroundTransparency = 1
-    textLbl.Font               = Enum.Font.Gotham
-    textLbl.TextSize           = 14
-    textLbl.TextColor3         = cfg.Text
-    textLbl.Text               = text or "Message body."
-    textLbl.TextWrapped        = true
-    textLbl.TextXAlignment     = Enum.TextXAlignment.Left
+    textLbl.Size = UDim2.new(1, -24, 0, 36)
+    textLbl.Position = UDim2.new(0, 12, 0, 36)
+    textLbl.ZIndex = 11
+    textLbl.TextTransparency = 1
+    textLbl.Parent = frame
 
-    -- Duration bar
-    local barBg = Instance.new("Frame", frame)
-    barBg.Name                   = "BarBG"
-    barBg.Size                   = UDim2.new(1, -24, 0, self.BarHeight)
-    barBg.Position               = UDim2.new(0, 12, 1, -self.BarHeight - 8)
-    barBg.BackgroundColor3       = Color3.fromRGB(70, 70, 70)
-    barBg.BackgroundTransparency = 0
-    Instance.new("UICorner", barBg).CornerRadius = UDim.new(0, 2)
+    local bar = Instance.new("Frame")
+    bar.Name = "ProgressBar"
+    bar.Size = UDim2.new(1, -24, 0, self.BarHeight)
+    bar.Position = UDim2.new(0, 12, 1, -self.BarHeight - 8)
+    bar.BackgroundColor3 = cfg.Text
+    bar.BackgroundTransparency = 0.6
+    bar.ZIndex = 11
+    bar.Parent = frame
 
-    local barFill = Instance.new("Frame", barBg)
-    barFill.Name             = "BarFill"
-    barFill.Size             = UDim2.new(1, 0, 1, 0)
-    barFill.BackgroundColor3 = cfg.Text
-    local fillCorner         = Instance.new("UICorner", barFill)
-    fillCorner.CornerRadius  = UDim.new(0, 2)
+    local barCorner = Instance.new("UICorner")
+    barCorner.CornerRadius = UDim.new(0, 2)
+    barCorner.Parent = bar
 
-    -- Animate in
-    TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0,
-        Position               = UDim2.new(0.5, 0, 0, 0)
-    }):Play()
+    local fill = Instance.new("Frame")
+    fill.BackgroundColor3 = cfg.Text
+    fill.Size = UDim2.new(1, 0, 1, 0)
+    fill.ZIndex = 12
+    fill.Name = "Fill"
+    fill.Parent = bar
 
-    -- Progress bar tween
-    local barTween = TweenService:Create(barFill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-        Size = UDim2.new(0, 0, 1, 0)
-    })
-    barTween:Play()
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 2)
+    fillCorner.Parent = fill
 
-    -- Dismiss logic
+    -- Hover effect
+    local overlay = Instance.new("TextButton")
+    overlay.Name = "Overlay"
+    overlay.BackgroundTransparency = 1
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.Text = ""
+    overlay.ZIndex = 20
+    overlay.Parent = frame
+
+    overlay.MouseEnter:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.2), {
+            BackgroundColor3 = cfg.BG:Lerp(Color3.new(1, 1, 1), 0.05)
+        }):Play()
+    end)
+
+    overlay.MouseLeave:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.2), {
+            BackgroundColor3 = cfg.BG
+        }):Play()
+    end)
+
     local dismissed = false
     local function dismiss()
         if dismissed then return end
         dismissed = true
-        barTween:Pause()
-        TweenService:Create(frame, TweenInfo.new(self.FadeTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            BackgroundTransparency = 1
-        }):Play()
-        TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+
+        TweenService:Create(icon, TweenInfo.new(0.2), {ImageTransparency = 1}):Play()
+        TweenService:Create(titleLbl, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+        TweenService:Create(textLbl, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+        TweenService:Create(frame, TweenInfo.new(Notification.FadeTime), {
+            BackgroundTransparency = 1,
             Position = UDim2.new(0.5, 0, 0, -100)
         }):Play()
-        TweenService:Create(icon, TweenInfo.new(self.FadeTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            ImageTransparency = 1
-        }):Play()
-        delay(math.max(self.FadeTime, self.SlideTime), function()
+        task.delay(Notification.FadeTime + 0.1, function()
             frame:Destroy()
         end)
     end
 
-    -- Click overlay
-    local clickBtn = Instance.new("TextButton", frame)
-    clickBtn.Name                   = "ClickOverlay"
-    clickBtn.Size                   = UDim2.new(1, 0, 1, 0)
-    clickBtn.Position               = UDim2.new(0, 0, 0, 0)
-    clickBtn.BackgroundTransparency = 1
-    clickBtn.Text                   = ""
-    clickBtn.ZIndex                 = frame.ZIndex + 1
-    clickBtn.MouseButton1Click:Connect(dismiss)
+    overlay.MouseButton1Click:Connect(dismiss)
 
-    -- Auto dismiss
-    delay(duration, dismiss)
+    -- Animate in
+    TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 0,
+        Position = UDim2.new(0.5, 0, 0, 0)
+    }):Play()
+    TweenService:Create(icon, TweenInfo.new(0.4), {ImageTransparency = 0}):Play()
+    TweenService:Create(titleLbl, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+    TweenService:Create(textLbl, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+
+    TweenService:Create(fill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+        Size = UDim2.new(0, 0, 1, 0)
+    }):Play()
+
+    task.delay(duration, dismiss)
 end
 
--- Convenience wrappers
 function Notification:Info(t1, t2, d)    self:Send(t1, t2, d, "Info")    end
 function Notification:Success(t1, t2, d) self:Send(t1, t2, d, "Success") end
 function Notification:Warning(t1, t2, d) self:Send(t1, t2, d, "Warning") end
 function Notification:Error(t1, t2, d)   self:Send(t1, t2, d, "Error")   end
+
+return Notification
