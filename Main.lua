@@ -1,7 +1,7 @@
 --[[
   Made By: Kai
   Made With Love <3
-  V1.1.4
+  V1.1.5
 ]]
 
 game:DefineFastFlag("UseEnhancedNotificationClicks", true)
@@ -71,8 +71,9 @@ function Notification:Send(title, text, duration, style)
     frame.ZIndex                 = 10
     frame.Parent                 = holder
 
-    -- Corner & shadow
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 4)
+
+    -- Shadow
     local shadow = Instance.new("ImageLabel", frame)
     shadow.Name               = "Shadow"
     shadow.Size               = UDim2.new(1, 20, 1, 20)
@@ -91,7 +92,12 @@ function Notification:Send(title, text, duration, style)
     icon.Position              = UDim2.new(0, 12, 0, 12)
     icon.BackgroundTransparency= 1
     icon.Image                 = cfg.Icon
+    icon.ImageTransparency     = 1
     icon.ZIndex                = frame.ZIndex + 1
+
+    TweenService:Create(icon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        ImageTransparency = 0
+    }):Play()
 
     -- Title
     local titleLbl = Instance.new("TextLabel", frame)
@@ -135,8 +141,8 @@ function Notification:Send(title, text, duration, style)
     local fillCorner         = Instance.new("UICorner", barFill)
     fillCorner.CornerRadius  = UDim.new(0, 2)
 
-    -- Animate in (Bounce)
-    TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    -- Animate in
+    TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0,
         Position               = UDim2.new(0.5, 0, 0, 0)
     }):Play()
@@ -153,12 +159,14 @@ function Notification:Send(title, text, duration, style)
         if dismissed then return end
         dismissed = true
         barTween:Pause()
-        -- Animate out (Fade-slide)
         TweenService:Create(frame, TweenInfo.new(self.FadeTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
             BackgroundTransparency = 1
         }):Play()
-        TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
-            Position = UDim2.new(0.5, 0, 0, -80)
+        TweenService:Create(frame, TweenInfo.new(self.SlideTime, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+            Position = UDim2.new(0.5, 0, 0, -100)
+        }):Play()
+        TweenService:Create(icon, TweenInfo.new(self.FadeTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            ImageTransparency = 1
         }):Play()
         delay(math.max(self.FadeTime, self.SlideTime), function()
             frame:Destroy()
