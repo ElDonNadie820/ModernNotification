@@ -1,0 +1,619 @@
+-- SolarUI - Modern UI Library for Roblox
+-- Created by: Assistant
+-- Version: 1.0.0
+
+local SolarUI = {}
+SolarUI.__index = SolarUI
+
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Variables
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- Default configurations
+local config = {
+    theme = {
+        primary = Color3.fromRGB(88, 101, 242),
+        secondary = Color3.fromRGB(64, 68, 75),
+        background = Color3.fromRGB(32, 34, 37),
+        surface = Color3.fromRGB(47, 49, 54),
+        text = Color3.fromRGB(255, 255, 255),
+        textSecondary = Color3.fromRGB(185, 187, 190),
+        accent = Color3.fromRGB(114, 137, 218),
+        success = Color3.fromRGB(87, 242, 135),
+        warning = Color3.fromRGB(255, 202, 40),
+        error = Color3.fromRGB(237, 66, 69)
+    },
+    animations = {
+        duration = 0.3,
+        easing = Enum.EasingStyle.Quad,
+        direction = Enum.EasingDirection.Out
+    }
+}
+
+-- Utility functions
+local function createTween(object, properties, duration)
+    duration = duration or config.animations.duration
+    local info = TweenInfo.new(duration, config.animations.easing, config.animations.direction)
+    return TweenService:Create(object, info, properties)
+end
+
+local function createCorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius or 8)
+    corner.Parent = parent
+    return corner
+end
+
+local function createStroke(parent, thickness, color)
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = thickness or 1
+    stroke.Color = color or config.theme.secondary
+    stroke.Parent = parent
+    return stroke
+end
+
+local function createGradient(parent, colors, rotation)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = colors or ColorSequence.new(config.theme.primary, config.theme.accent)
+    gradient.Rotation = rotation or 0
+    gradient.Parent = parent
+    return gradient
+end
+
+-- Main Library Constructor
+function SolarUI.new(title, size)
+    local self = setmetatable({}, SolarUI)
+    
+    -- Create ScreenGui
+    self.screenGui = Instance.new("ScreenGui")
+    self.screenGui.Name = "SolarUI"
+    self.screenGui.ResetOnSpawn = false
+    self.screenGui.Parent = player.PlayerGui
+    
+    -- Main Frame
+    self.main = Instance.new("Frame")
+    self.main.Name = "Main"
+    self.main.Size = size or UDim2.new(0, 500, 0, 600)
+    self.main.Position = UDim2.new(0.5, -250, 0.5, -300)
+    self.main.BackgroundColor3 = config.theme.background
+    self.main.BorderSizePixel = 0
+    self.main.Parent = self.screenGui
+    
+    createCorner(self.main, 12)
+    createStroke(self.main, 1, config.theme.secondary)
+    
+    -- Title Bar
+    self.titleBar = Instance.new("Frame")
+    self.titleBar.Name = "TitleBar"
+    self.titleBar.Size = UDim2.new(1, 0, 0, 40)
+    self.titleBar.Position = UDim2.new(0, 0, 0, 0)
+    self.titleBar.BackgroundColor3 = config.theme.surface
+    self.titleBar.BorderSizePixel = 0
+    self.titleBar.Parent = self.main
+    
+    createCorner(self.titleBar, 12)
+    
+    -- Title Text
+    self.titleText = Instance.new("TextLabel")
+    self.titleText.Name = "Title"
+    self.titleText.Size = UDim2.new(1, -100, 1, 0)
+    self.titleText.Position = UDim2.new(0, 15, 0, 0)
+    self.titleText.BackgroundTransparency = 1
+    self.titleText.Text = title or "SolarUI"
+    self.titleText.TextColor3 = config.theme.text
+    self.titleText.TextScaled = true
+    self.titleText.Font = Enum.Font.GothamBold
+    self.titleText.TextXAlignment = Enum.TextXAlignment.Left
+    self.titleText.Parent = self.titleBar
+    
+    -- Close Button
+    self.closeButton = Instance.new("TextButton")
+    self.closeButton.Name = "CloseButton"
+    self.closeButton.Size = UDim2.new(0, 30, 0, 30)
+    self.closeButton.Position = UDim2.new(1, -40, 0, 5)
+    self.closeButton.BackgroundColor3 = config.theme.error
+    self.closeButton.BorderSizePixel = 0
+    self.closeButton.Text = "×"
+    self.closeButton.TextColor3 = config.theme.text
+    self.closeButton.TextScaled = true
+    self.closeButton.Font = Enum.Font.GothamBold
+    self.closeButton.Parent = self.titleBar
+    
+    createCorner(self.closeButton, 15)
+    
+    -- Content Frame
+    self.content = Instance.new("ScrollingFrame")
+    self.content.Name = "Content"
+    self.content.Size = UDim2.new(1, -20, 1, -60)
+    self.content.Position = UDim2.new(0, 10, 0, 50)
+    self.content.BackgroundTransparency = 1
+    self.content.BorderSizePixel = 0
+    self.content.ScrollBarThickness = 6
+    self.content.ScrollBarImageColor3 = config.theme.primary
+    self.content.Parent = self.main
+    
+    -- Layout
+    self.layout = Instance.new("UIListLayout")
+    self.layout.SortOrder = Enum.SortOrder.LayoutOrder
+    self.layout.Padding = UDim.new(0, 8)
+    self.layout.Parent = self.content
+    
+    -- Variables
+    self.visible = true
+    self.dragging = false
+    self.dragStart = nil
+    self.startPos = nil
+    self.components = {}
+    
+    -- Events
+    self:setupEvents()
+    
+    return self
+end
+
+-- Setup Events
+function SolarUI:setupEvents()
+    -- Close button
+    self.closeButton.MouseButton1Click:Connect(function()
+        self:toggle()
+    end)
+    
+    -- Dragging
+    self.titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self.dragging = true
+            self.dragStart = input.Position
+            self.startPos = self.main.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if self.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - self.dragStart
+            self.main.Position = UDim2.new(
+                self.startPos.X.Scale,
+                self.startPos.X.Offset + delta.X,
+                self.startPos.Y.Scale,
+                self.startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self.dragging = false
+        end
+    end)
+    
+    -- Hover effects
+    self.closeButton.MouseEnter:Connect(function()
+        createTween(self.closeButton, {BackgroundColor3 = config.theme.error:lerp(Color3.new(1, 1, 1), 0.2)}):Play()
+    end)
+    
+    self.closeButton.MouseLeave:Connect(function()
+        createTween(self.closeButton, {BackgroundColor3 = config.theme.error}):Play()
+    end)
+end
+
+-- Toggle visibility
+function SolarUI:toggle()
+    self.visible = not self.visible
+    local tween = createTween(self.main, {
+        Size = self.visible and UDim2.new(0, 500, 0, 600) or UDim2.new(0, 500, 0, 0)
+    })
+    tween:Play()
+end
+
+-- Create Section
+function SolarUI:createSection(title)
+    local section = Instance.new("Frame")
+    section.Name = "Section"
+    section.Size = UDim2.new(1, 0, 0, 35)
+    section.BackgroundColor3 = config.theme.surface
+    section.BorderSizePixel = 0
+    section.Parent = self.content
+    
+    createCorner(section, 8)
+    
+    local sectionTitle = Instance.new("TextLabel")
+    sectionTitle.Name = "SectionTitle"
+    sectionTitle.Size = UDim2.new(1, -20, 1, 0)
+    sectionTitle.Position = UDim2.new(0, 10, 0, 0)
+    sectionTitle.BackgroundTransparency = 1
+    sectionTitle.Text = title or "Section"
+    sectionTitle.TextColor3 = config.theme.text
+    sectionTitle.TextScaled = true
+    sectionTitle.Font = Enum.Font.GothamSemibold
+    sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+    sectionTitle.Parent = section
+    
+    return section
+end
+
+-- Create Button
+function SolarUI:createButton(text, callback)
+    local button = Instance.new("TextButton")
+    button.Name = "Button"
+    button.Size = UDim2.new(1, 0, 0, 35)
+    button.BackgroundColor3 = config.theme.primary
+    button.BorderSizePixel = 0
+    button.Text = text or "Button"
+    button.TextColor3 = config.theme.text
+    button.TextScaled = true
+    button.Font = Enum.Font.Gotham
+    button.Parent = self.content
+    
+    createCorner(button, 8)
+    
+    -- Events
+    button.MouseButton1Click:Connect(function()
+        if callback then callback() end
+    end)
+    
+    button.MouseEnter:Connect(function()
+        createTween(button, {BackgroundColor3 = config.theme.primary:lerp(Color3.new(1, 1, 1), 0.1)}):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        createTween(button, {BackgroundColor3 = config.theme.primary}):Play()
+    end)
+    
+    table.insert(self.components, button)
+    return button
+end
+
+-- Create Toggle
+function SolarUI:createToggle(text, default, callback)
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Name = "Toggle"
+    toggleFrame.Size = UDim2.new(1, 0, 0, 35)
+    toggleFrame.BackgroundColor3 = config.theme.surface
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.Parent = self.content
+    
+    createCorner(toggleFrame, 8)
+    
+    local toggleText = Instance.new("TextLabel")
+    toggleText.Name = "ToggleText"
+    toggleText.Size = UDim2.new(1, -70, 1, 0)
+    toggleText.Position = UDim2.new(0, 10, 0, 0)
+    toggleText.BackgroundTransparency = 1
+    toggleText.Text = text or "Toggle"
+    toggleText.TextColor3 = config.theme.text
+    toggleText.TextScaled = true
+    toggleText.Font = Enum.Font.Gotham
+    toggleText.TextXAlignment = Enum.TextXAlignment.Left
+    toggleText.Parent = toggleFrame
+    
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Size = UDim2.new(0, 50, 0, 25)
+    toggleButton.Position = UDim2.new(1, -60, 0.5, -12.5)
+    toggleButton.BackgroundColor3 = default and config.theme.success or config.theme.secondary
+    toggleButton.BorderSizePixel = 0
+    toggleButton.Text = ""
+    toggleButton.Parent = toggleFrame
+    
+    createCorner(toggleButton, 12)
+    
+    local toggleIndicator = Instance.new("Frame")
+    toggleIndicator.Name = "Indicator"
+    toggleIndicator.Size = UDim2.new(0, 21, 0, 21)
+    toggleIndicator.Position = default and UDim2.new(1, -23, 0.5, -10.5) or UDim2.new(0, 2, 0.5, -10.5)
+    toggleIndicator.BackgroundColor3 = config.theme.text
+    toggleIndicator.BorderSizePixel = 0
+    toggleIndicator.Parent = toggleButton
+    
+    createCorner(toggleIndicator, 10)
+    
+    local toggled = default or false
+    
+    toggleButton.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        
+        local buttonColor = toggled and config.theme.success or config.theme.secondary
+        local indicatorPos = toggled and UDim2.new(1, -23, 0.5, -10.5) or UDim2.new(0, 2, 0.5, -10.5)
+        
+        createTween(toggleButton, {BackgroundColor3 = buttonColor}):Play()
+        createTween(toggleIndicator, {Position = indicatorPos}):Play()
+        
+        if callback then callback(toggled) end
+    end)
+    
+    table.insert(self.components, toggleFrame)
+    return toggleFrame
+end
+
+-- Create Slider
+function SolarUI:createSlider(text, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Name = "Slider"
+    sliderFrame.Size = UDim2.new(1, 0, 0, 50)
+    sliderFrame.BackgroundColor3 = config.theme.surface
+    sliderFrame.BorderSizePixel = 0
+    sliderFrame.Parent = self.content
+    
+    createCorner(sliderFrame, 8)
+    
+    local sliderText = Instance.new("TextLabel")
+    sliderText.Name = "SliderText"
+    sliderText.Size = UDim2.new(1, -60, 0, 20)
+    sliderText.Position = UDim2.new(0, 10, 0, 5)
+    sliderText.BackgroundTransparency = 1
+    sliderText.Text = text or "Slider"
+    sliderText.TextColor3 = config.theme.text
+    sliderText.TextScaled = true
+    sliderText.Font = Enum.Font.Gotham
+    sliderText.TextXAlignment = Enum.TextXAlignment.Left
+    sliderText.Parent = sliderFrame
+    
+    local valueText = Instance.new("TextLabel")
+    valueText.Name = "ValueText"
+    valueText.Size = UDim2.new(0, 50, 0, 20)
+    valueText.Position = UDim2.new(1, -55, 0, 5)
+    valueText.BackgroundTransparency = 1
+    valueText.Text = tostring(default or min)
+    valueText.TextColor3 = config.theme.textSecondary
+    valueText.TextScaled = true
+    valueText.Font = Enum.Font.Gotham
+    valueText.TextXAlignment = Enum.TextXAlignment.Right
+    valueText.Parent = sliderFrame
+    
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Name = "SliderBar"
+    sliderBar.Size = UDim2.new(1, -20, 0, 6)
+    sliderBar.Position = UDim2.new(0, 10, 1, -15)
+    sliderBar.BackgroundColor3 = config.theme.secondary
+    sliderBar.BorderSizePixel = 0
+    sliderBar.Parent = sliderFrame
+    
+    createCorner(sliderBar, 3)
+    
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Name = "SliderFill"
+    sliderFill.Size = UDim2.new(0, 0, 1, 0)
+    sliderFill.Position = UDim2.new(0, 0, 0, 0)
+    sliderFill.BackgroundColor3 = config.theme.primary
+    sliderFill.BorderSizePixel = 0
+    sliderFill.Parent = sliderBar
+    
+    createCorner(sliderFill, 3)
+    
+    local sliderHandle = Instance.new("Frame")
+    sliderHandle.Name = "SliderHandle"
+    sliderHandle.Size = UDim2.new(0, 16, 0, 16)
+    sliderHandle.Position = UDim2.new(0, -8, 0.5, -8)
+    sliderHandle.BackgroundColor3 = config.theme.text
+    sliderHandle.BorderSizePixel = 0
+    sliderHandle.Parent = sliderFill
+    
+    createCorner(sliderHandle, 8)
+    
+    local value = default or min
+    local dragging = false
+    
+    local function updateSlider(newValue)
+        value = math.clamp(newValue, min, max)
+        local percentage = (value - min) / (max - min)
+        
+        sliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+        sliderHandle.Position = UDim2.new(1, -8, 0.5, -8)
+        valueText.Text = tostring(math.floor(value))
+        
+        if callback then callback(value) end
+    end
+    
+    sliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            local percentage = (input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X
+            local newValue = min + (max - min) * percentage
+            updateSlider(newValue)
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local percentage = (input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X
+            local newValue = min + (max - min) * percentage
+            updateSlider(newValue)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    updateSlider(value)
+    
+    table.insert(self.components, sliderFrame)
+    return sliderFrame
+end
+
+-- Create Textbox
+function SolarUI:createTextbox(text, placeholder, callback)
+    local textbox = Instance.new("TextBox")
+    textbox.Name = "Textbox"
+    textbox.Size = UDim2.new(1, 0, 0, 35)
+    textbox.BackgroundColor3 = config.theme.surface
+    textbox.BorderSizePixel = 0
+    textbox.Text = text or ""
+    textbox.PlaceholderText = placeholder or "Enter text..."
+    textbox.TextColor3 = config.theme.text
+    textbox.PlaceholderColor3 = config.theme.textSecondary
+    textbox.TextScaled = true
+    textbox.Font = Enum.Font.Gotham
+    textbox.Parent = self.content
+    
+    createCorner(textbox, 8)
+    createStroke(textbox, 1, config.theme.secondary)
+    
+    textbox.Focused:Connect(function()
+        createTween(textbox.UIStroke, {Color = config.theme.primary}):Play()
+    end)
+    
+    textbox.FocusLost:Connect(function()
+        createTween(textbox.UIStroke, {Color = config.theme.secondary}):Play()
+        if callback then callback(textbox.Text) end
+    end)
+    
+    table.insert(self.components, textbox)
+    return textbox
+end
+
+-- Create Dropdown
+function SolarUI:createDropdown(text, options, callback)
+    local dropdown = Instance.new("Frame")
+    dropdown.Name = "Dropdown"
+    dropdown.Size = UDim2.new(1, 0, 0, 35)
+    dropdown.BackgroundColor3 = config.theme.surface
+    dropdown.BorderSizePixel = 0
+    dropdown.Parent = self.content
+    
+    createCorner(dropdown, 8)
+    
+    local dropdownButton = Instance.new("TextButton")
+    dropdownButton.Name = "DropdownButton"
+    dropdownButton.Size = UDim2.new(1, 0, 1, 0)
+    dropdownButton.BackgroundTransparency = 1
+    dropdownButton.Text = text or "Select Option"
+    dropdownButton.TextColor3 = config.theme.text
+    dropdownButton.TextScaled = true
+    dropdownButton.Font = Enum.Font.Gotham
+    dropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+    dropdownButton.Parent = dropdown
+    
+    local dropdownArrow = Instance.new("TextLabel")
+    dropdownArrow.Name = "Arrow"
+    dropdownArrow.Size = UDim2.new(0, 20, 1, 0)
+    dropdownArrow.Position = UDim2.new(1, -25, 0, 0)
+    dropdownArrow.BackgroundTransparency = 1
+    dropdownArrow.Text = "▼"
+    dropdownArrow.TextColor3 = config.theme.textSecondary
+    dropdownArrow.TextScaled = true
+    dropdownArrow.Font = Enum.Font.Gotham
+    dropdownArrow.Parent = dropdown
+    
+    local dropdownList = Instance.new("Frame")
+    dropdownList.Name = "DropdownList"
+    dropdownList.Size = UDim2.new(1, 0, 0, #options * 30)
+    dropdownList.Position = UDim2.new(0, 0, 1, 5)
+    dropdownList.BackgroundColor3 = config.theme.surface
+    dropdownList.BorderSizePixel = 0
+    dropdownList.Visible = false
+    dropdownList.Parent = dropdown
+    
+    createCorner(dropdownList, 8)
+    createStroke(dropdownList, 1, config.theme.secondary)
+    
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Parent = dropdownList
+    
+    local isOpen = false
+    
+    for i, option in ipairs(options) do
+        local optionButton = Instance.new("TextButton")
+        optionButton.Name = "Option" .. i
+        optionButton.Size = UDim2.new(1, 0, 0, 30)
+        optionButton.BackgroundColor3 = config.theme.surface
+        optionButton.BorderSizePixel = 0
+        optionButton.Text = option
+        optionButton.TextColor3 = config.theme.text
+        optionButton.TextScaled = true
+        optionButton.Font = Enum.Font.Gotham
+        optionButton.Parent = dropdownList
+        
+        optionButton.MouseButton1Click:Connect(function()
+            dropdownButton.Text = option
+            dropdownList.Visible = false
+            isOpen = false
+            dropdownArrow.Text = "▼"
+            
+            if callback then callback(option) end
+        end)
+        
+        optionButton.MouseEnter:Connect(function()
+            createTween(optionButton, {BackgroundColor3 = config.theme.primary}):Play()
+        end)
+        
+        optionButton.MouseLeave:Connect(function()
+            createTween(optionButton, {BackgroundColor3 = config.theme.surface}):Play()
+        end)
+    end
+    
+    dropdownButton.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        dropdownList.Visible = isOpen
+        dropdownArrow.Text = isOpen and "▲" or "▼"
+    end)
+    
+    table.insert(self.components, dropdown)
+    return dropdown
+end
+
+-- Update content size
+function SolarUI:updateContentSize()
+    local totalHeight = 0
+    for _, component in ipairs(self.components) do
+        totalHeight = totalHeight + component.Size.Y.Offset + 8
+    end
+    self.content.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+end
+
+-- Auto-update content size
+RunService.Heartbeat:Connect(function()
+    for _, ui in pairs(getgenv().SolarUIInstances or {}) do
+        ui:updateContentSize()
+    end
+end)
+
+-- Keep track of instances
+getgenv().SolarUIInstances = getgenv().SolarUIInstances or {}
+
+-- Example usage
+local function createExample()
+    local ui = SolarUI.new("SolarUI Demo", UDim2.new(0, 400, 0, 500))
+    table.insert(getgenv().SolarUIInstances, ui)
+    
+    ui:createSection("General")
+    
+    ui:createButton("Click Me!", function()
+        print("Button clicked!")
+    end)
+    
+    ui:createToggle("Enable Feature", false, function(state)
+        print("Toggle:", state)
+    end)
+    
+    ui:createSlider("Volume", 0, 100, 50, function(value)
+        print("Slider value:", value)
+    end)
+    
+    ui:createTextbox("", "Enter your name...", function(text)
+        print("Text entered:", text)
+    end)
+    
+    ui:createDropdown("Select Theme", {"Dark", "Light", "Blue", "Purple"}, function(option)
+        print("Selected:", option)
+    end)
+    
+    ui:createSection("Advanced")
+    
+    ui:createButton("Advanced Action", function()
+        print("Advanced action executed!")
+    end)
+    
+    return ui
+end
+
+-- Export
+SolarUI.createExample = createExample
+return SolarUI
